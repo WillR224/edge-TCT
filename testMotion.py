@@ -2,6 +2,8 @@ import time
 import os
 import sys
 
+
+
 try:
     import libximc.highlevel as ximc
     print("Use libximc {} that has been found among the pip installed packages".format(ximc.ximc_version()))
@@ -11,6 +13,7 @@ except ImportError:
     cur_dir = os.path.abspath(os.path.dirname(__file__))
     ximc_dir = os.path.join(cur_dir, "ximc-2.14.27","ximc")
     ximc_package_dir = os.path.join(ximc_dir, "crossplatform", "wrappers", "python")
+    print(ximc_package_dir)
     sys.path.append(ximc_package_dir)
     import libximc.highlevel as ximc
     print("Success!")
@@ -18,17 +21,30 @@ except ImportError:
 print("Library version: " + ximc.ximc_version())
 
 
-# ******************************************** #
-#               Device searching               #
-# ******************************************** #
 
-# Flags explanation:
-# ximc.EnumerateFlags.ENUMERATE_PROBE   -   Probing found devices for detailed info.
-# ximc.EnumerateFlags.ENUMERATE_NETWORK -   Check network devices.
+
+
+
+
+def move(axis: ximc.Axis, distance: int, udistance: int) -> None:
+    print("\nGoing to {0} steps, {1} microsteps".format(distance, udistance))
+    axis.command_move(distance, udistance)
+
+def status(axis: ximc.Axis) -> None:
+    print("\nGet status")
+    status = axis.get_status()
+    print("Status.Ipwr: {}".format(status.Ipwr))
+    print("Status.Upwr: {}".format(status.Upwr))
+    print("Status.Iusb: {}".format(status.Iusb))
+    print("Status.Flags: {}".format(status.Flags))
+
+
+
+
+
+
 enum_flags = ximc.EnumerateFlags.ENUMERATE_PROBE | ximc.EnumerateFlags.ENUMERATE_NETWORK
 
-# Hint explanation:
-# "addr=" hint is used for broadcast network enumeration
 enum_hints = "addr="
 devenum = ximc.enumerate_devices(enum_flags, enum_hints)
 print("Device count: {}".format(len(devenum)))
@@ -44,7 +60,6 @@ elif len(devenum) > 0:
     open_name = devenum[0]["uri"]
     print("open_name = ", open_name)
 else:
-    # set path to virtual device file to be created
     tempdir = os.path.join(os.path.expanduser('~'), "testdevice.bin")
     open_name = "xi-emu:///" + tempdir
     flag_virtual = 1
@@ -52,13 +67,17 @@ else:
     print("The virtual controller is opened to check the operation of the library.")
     print("If you want to open a real controller, connect it or close the application that uses it.")
     print("open_name = ", open_name)
-# ******************************************** #
-#              Create axis object              #
-# ******************************************** #
-# Axis is the main libximc.highlevel class. It allows you to interact with the device.
-# Axis takes one argument - URI of the device
+
+
+
+
+
 axis = ximc.Axis(open_name)
 print("\nOpen device " + axis.uri)
-axis.open_device()  # The connection must be opened manually
-status = axis.get_status()
-print(status)
+axis.open_device()
+
+
+
+
+status(axis)
+move(axis,10,0)
